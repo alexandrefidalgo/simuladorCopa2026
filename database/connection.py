@@ -1,13 +1,25 @@
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
 from supabase import Client, create_client
 
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+# Local: .env via dotenv | Cloud: st.secrets
+try:
+    import streamlit as st
+    _url = st.secrets.get("SUPABASE_URL", "")
+    _key = st.secrets.get("SUPABASE_KEY", "")
+except Exception:
+    _url = ""
+    _key = ""
 
-SUPABASE_URL = os.getenv("SUPABASE_URL", "https://aoscrsfqhtobvbdywqcl.supabase.co")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "sb_publishable_OfQiv_FmMkyhdrt3pY-7ag_IiTZp0Fd")
+if not _url or not _key:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+    _url = os.getenv("SUPABASE_URL", "https://wljpvxicodobqlejffmy.supabase.co")
+    _key = os.getenv("SUPABASE_KEY", "")
+
+SUPABASE_URL = _url
+SUPABASE_KEY = _key
 
 
 def get_supabase() -> Client:

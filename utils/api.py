@@ -1,5 +1,4 @@
 import json
-import subprocess
 import requests
 from data.grupos import GRUPOS
 
@@ -66,17 +65,11 @@ def normalize_team(name: str) -> str | None:
 
 
 def _fetch_worldcup26() -> list[dict]:
-    """Fetch from worldcup26.ir via curl pipe (bypasses Python SSL issues on Windows)."""
+    """Fetch from worldcup26.ir."""
     try:
-        import shlex
-        cmd = f'curl -k -s --max-time 20 "{WORLDCUP26_URL}"'
-        result = subprocess.run(
-            cmd, shell=True, capture_output=True, timeout=25,
-        )
-        raw = result.stdout
-        if not raw:
-            return []
-        data = json.loads(raw.decode("utf-8"))
+        resp = requests.get(WORLDCUP26_URL, timeout=20, verify=False)
+        resp.raise_for_status()
+        data = resp.json()
         games = data.get("games", data.get("data", data)) if isinstance(data, dict) else data
         if not isinstance(games, list):
             return []

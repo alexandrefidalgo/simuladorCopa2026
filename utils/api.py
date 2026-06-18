@@ -1,6 +1,9 @@
 import json
 import requests
+import urllib3
 from data.grupos import GRUPOS
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 WORLDCUP26_URL = "https://worldcup26.ir/get/games"
 WHENISKICKOFF_URL = "https://wheniskickoff.com/data/v1/matches.json"

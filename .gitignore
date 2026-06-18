@@ -1,0 +1,10 @@
+.env
+opencode.json
+.opencode/
+.mcp.json
+.streamlit/secrets.toml
+__pycache__/
+*.pyc
+*.pyo
+supabase/.temp/
+nul

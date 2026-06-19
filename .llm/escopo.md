@@ -65,3 +65,5 @@
 # Na aba Seleção colocar cada grupo dentro de um baner e cada jogo dentro de um baner, separando por rodadas. 
 
 # Na aba Seleção os grupos de seleção de primeiro e segundo de cada grupo dentro de um card com bordas arredondadas e com fundo verde.
+
+# adicionar nova regra, se um ou mais usuarios estiverem com o mesmo numero de pontos colocar eles juntos na mesma posição 

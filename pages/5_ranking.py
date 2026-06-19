@@ -258,6 +258,7 @@ def calcular_pontos(part_id):
     for palpite in palpites_p:
         key = (palpite["rodada"], palpite["grupo"], palpite["time_casa"], palpite["time_fora"])
         resultado = resultados_grupo.get(key)
+        flipped = False
         # Fallback: API results have rodada=0, match by (grupo, casa, fora)
         if not resultado:
             resultado = resultados_grupo.get((0, palpite["grupo"], palpite["time_casa"], palpite["time_fora"]))
@@ -265,8 +266,12 @@ def calcular_pontos(part_id):
         reversed_key = (palpite["rodada"], palpite["grupo"], palpite["time_fora"], palpite["time_casa"])
         if not resultado:
             resultado = resultados_grupo.get(reversed_key)
+            if resultado:
+                flipped = True
         if not resultado:
             resultado = resultados_grupo.get((0, palpite["grupo"], palpite["time_fora"], palpite["time_casa"]))
+            if resultado:
+                flipped = True
         # If found result is 0x0, check if API has a better result
         if resultado and resultado.get("gols_casa", 0) == 0 and resultado.get("gols_fora", 0) == 0:
             for try_key in [
@@ -276,12 +281,15 @@ def calcular_pontos(part_id):
                 api_r = resultados_grupo.get(try_key)
                 if api_r and (api_r.get("gols_casa", 0) > 0 or api_r.get("gols_fora", 0) > 0):
                     resultado = api_r
+                    flipped = (try_key[2] != palpite["time_casa"])
                     break
         data_hora = GRUPO_JOGOS_DATAS.get(key, "")
         p_casa, p_fora = palpite["placar_casa"], palpite["placar_fora"]
 
         if resultado:
             r_casa, r_fora = resultado["gols_casa"], resultado["gols_fora"]
+            if flipped:
+                r_casa, r_fora = r_fora, r_casa
 
             if r_casa > r_fora: vencedor_real = "casa"
             elif r_fora > r_casa: vencedor_real = "fora"

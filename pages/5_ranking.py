@@ -79,8 +79,8 @@ for tab_grupo, grupo_letra in zip(tabs_grupos, GRUPOS.keys()):
         for key, r in resultados_grupo.items():
             if key[1] != grupo_letra:
                 continue
-            gc, gf = r["gols_casa"], r["gols_fora"]
-            if gc == 0 and gf == 0:
+            gols_casa, gols_fora = r["gols_casa"], r["gols_fora"]
+            if gols_casa == 0 and gols_fora == 0:
                 casa, fora = key[2], key[3]
                 has_real = any(
                     resultados_grupo.get((rod, grupo_letra, casa, fora), {}).get("gols_casa", 0) > 0 or
@@ -97,18 +97,18 @@ for tab_grupo, grupo_letra in zip(tabs_grupos, GRUPOS.keys()):
 
             stats[casa]["jogos"] += 1
             stats[fora]["jogos"] += 1
-            stats[casa]["gf"] += gc
-            stats[casa]["gc"] += gf
-            stats[fora]["gf"] += gf
-            stats[fora]["gc"] += gc
+            stats[casa]["gf"] += gols_casa
+            stats[casa]["gc"] += gols_fora
+            stats[fora]["gf"] += gols_fora
+            stats[fora]["gc"] += gols_casa
             stats[casa]["sg"] = stats[casa]["gf"] - stats[casa]["gc"]
             stats[fora]["sg"] = stats[fora]["gf"] - stats[fora]["gc"]
 
-            if gc > gf:
+            if gols_casa > gols_fora:
                 stats[casa]["v"] += 1
                 stats[casa]["pontos"] += 3
                 stats[fora]["d"] += 1
-            elif gf > gc:
+            elif gols_fora > gols_casa:
                 stats[fora]["v"] += 1
                 stats[fora]["pontos"] += 3
                 stats[casa]["d"] += 1
@@ -156,9 +156,9 @@ for grupo_letra in GRUPOS.keys():
     for key, r in resultados_grupo.items():
         if key[1] != grupo_letra:
             continue
-        gc, gf = r["gols_casa"], r["gols_fora"]
+        gols_casa, gols_fora = r["gols_casa"], r["gols_fora"]
         # Skip empty 0x0 results if a real result exists
-        if gc == 0 and gf == 0:
+        if gols_casa == 0 and gols_fora == 0:
             casa, fora = key[2], key[3]
             has_real = any(
                 resultados_grupo.get((rod, grupo_letra, casa, fora), {}).get("gols_casa", 0) > 0 or
@@ -173,18 +173,18 @@ for grupo_letra in GRUPOS.keys():
                 continue
         casa, fora = key[2], key[3]
 
-        if gc > gf:
+        if gols_casa > gols_fora:
             stats[casa]["pontos"] += 3
-        elif gf > gc:
+        elif gols_fora > gols_casa:
             stats[fora]["pontos"] += 3
         else:
             stats[casa]["pontos"] += 1
             stats[fora]["pontos"] += 1
 
-        stats[casa]["sg"] += gc - gf
-        stats[fora]["sg"] += gf - gc
-        stats[casa]["gf"] += gc
-        stats[fora]["gf"] += gf
+        stats[casa]["sg"] += gols_casa - gols_fora
+        stats[fora]["sg"] += gols_fora - gols_casa
+        stats[casa]["gf"] += gols_casa
+        stats[fora]["gf"] += gols_fora
 
     # Ordenar por pontos, SG, GF
     ranking_grupo = sorted(stats.items(), key=lambda x: (x[1]["pontos"], x[1]["sg"], x[1]["gf"]), reverse=True)
@@ -221,11 +221,12 @@ if terceiros_por_grupo:
     top8_display = [f"{get_flag_html(t, 20)} {t}" for t in top8_nomes]
     st.markdown(" &nbsp; | &nbsp; ".join(top8_display), unsafe_allow_html=True)
 
-    # Salvar terceiros confirmados (global)
-    if st.button("✅ Confirmar Top 8 Terceiros", type="primary", use_container_width=True):
+    # Salvar terceiros confirmados (apenas admin)
+    if not st.session_state.get("admin", False):
+        st.info("Apenas administradores podem confirmar os melhores terceiros.")
+    elif st.button("✅ Confirmar Top 8 Terceiros", type="primary", use_container_width=True):
         try:
-            # Limpar terceiros anteriores e salvar os confirmados
-            supabase.table("melhores_terceiros").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+            supabase.table("melhores_terceiros").delete().eq("participante_id", participante_id).execute()
             supabase.table("melhores_terceiros").insert({
                 "participante_id": participante_id,
                 "terceiros_selecionados": sorted(top8_nomes),
@@ -326,9 +327,14 @@ def calcular_pontos(part_id):
 
                 if resultado:
                     r_casa, r_fora = resultado["gols_casa"], resultado["gols_fora"]
-                    if r_casa > r_fora: vencedor_real = casa_time
-                    elif r_fora > r_casa: vencedor_real = fora_time
-                    else: vencedor_real = casa_time
+                    if r_casa > r_fora:
+                        vencedor_real = casa_time
+                    elif r_fora > r_casa:
+                        vencedor_real = fora_time
+                    else:
+                        # Empate no mata-mata: precisa de pênaltis (coluna não existe ainda)
+                        # Pular este confronto até admin inserir resultado com pênaltis
+                        continue
 
                     # Data do confronto
                     confronto_data = MATA_MATA_RODADAS[fase_key]["confrontos"]

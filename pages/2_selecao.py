@@ -116,12 +116,16 @@ for t in times_grupo:
 for key, r in resultados_grupo.items():
     if key[1] != grupo_letra:
         continue
-    gc, gf = r["gols_casa"], r["gols_fora"]
-    if gc == 0 and gf == 0:
+    gols_casa, gols_fora = r["gols_casa"], r["gols_fora"]
+    if gols_casa == 0 and gols_fora == 0:
         casa, fora = key[2], key[3]
         has_real = any(
             resultados_grupo.get((rod, grupo_letra, casa, fora), {}).get("gols_casa", 0) > 0 or
             resultados_grupo.get((rod, grupo_letra, casa, fora), {}).get("gols_fora", 0) > 0
+            for rod in [0, 1, 2, 3]
+        ) or any(
+            resultados_grupo.get((rod, grupo_letra, fora, casa), {}).get("gols_casa", 0) > 0 or
+            resultados_grupo.get((rod, grupo_letra, fora, casa), {}).get("gols_fora", 0) > 0
             for rod in [0, 1, 2, 3]
         )
         if has_real:
@@ -130,18 +134,18 @@ for key, r in resultados_grupo.items():
 
     stats[casa]["jogos"] += 1
     stats[fora]["jogos"] += 1
-    stats[casa]["gf"] += gc
-    stats[casa]["gc"] += gf
-    stats[fora]["gf"] += gf
-    stats[fora]["gc"] += gc
+    stats[casa]["gf"] += gols_casa
+    stats[casa]["gc"] += gols_fora
+    stats[fora]["gf"] += gols_fora
+    stats[fora]["gc"] += gols_casa
     stats[casa]["sg"] = stats[casa]["gf"] - stats[casa]["gc"]
     stats[fora]["sg"] = stats[fora]["gf"] - stats[fora]["gc"]
 
-    if gc > gf:
+    if gols_casa > gols_fora:
         stats[casa]["v"] += 1
         stats[casa]["pontos"] += 3
         stats[fora]["d"] += 1
-    elif gf > gc:
+    elif gols_fora > gols_casa:
         stats[fora]["v"] += 1
         stats[fora]["pontos"] += 3
         stats[casa]["d"] += 1

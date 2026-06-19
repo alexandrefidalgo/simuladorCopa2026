@@ -57,6 +57,7 @@ with tab_login:
                 if verificar_senha(senha, user["senha_hash"]):
                     st.session_state["participante_id"] = user["id"]
                     st.session_state["nome"] = user["nome_completo"]
+                    st.session_state["admin"] = user.get("admin", False)
                     st.success(f"Bem-vindo(a), {user['nome_completo']}!")
                     st.switch_page("app.py")
                 else:

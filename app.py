@@ -18,7 +18,7 @@ if "participante_id" not in st.session_state:
 col_logout, col_spacer, col_user = st.columns([1, 4, 1])
 with col_logout:
     if st.button("Sair", key="btn_logout"):
-        for key in ["participante_id", "nome", "terceiros_sorteados",
+        for key in ["participante_id", "nome", "admin", "terceiros_sorteados",
                      "r32_vencedores", "oitavas_vencedores",
                      "quartas_vencedores", "semis_vencedores"]:
             st.session_state.pop(key, None)
@@ -53,7 +53,9 @@ nav_items = [
     ("📊 Palpites", "pages/4_palpites.py", "nav_palpites"),
     ("🏅 Ranking", "pages/5_ranking.py", "nav_ranking"),
 ]
-cols = st.columns(5)
+if st.session_state.get("admin", False):
+    nav_items.append(("👑 Admin", "pages/6_admin.py", "nav_admin"))
+cols = st.columns(len(nav_items))
 for col, (label, page, key) in zip(cols, nav_items):
     with col:
         if st.button(label, key=key, use_container_width=True):

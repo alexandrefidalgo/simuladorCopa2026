@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS participantes (
   time_favorito TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   senha_hash TEXT NOT NULL,
+  admin BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

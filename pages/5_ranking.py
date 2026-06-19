@@ -28,7 +28,46 @@ supabase = get_supabase()
 # ═══════════════════════════════════════════════════════════════════
 # CARREGAR RESULTADOS (DB + API)
 # ═══════════════════════════════════════════════════════════════════
+
+# Mapear cada confronto canônico → rodada
+_rodada_lookup = {}
+for _rod, _jogos in GRUPO_RODADAS.items():
+    for _g, _c, _f in _jogos:
+        _rodada_lookup[(_g, _c, _f)] = _rod
+        _rodada_lookup[(_g, _f, _c)] = _rod  # also reverse
+
 if st.button("🔄 Atualizar Resultados", use_container_width=True):
+    # Sync API results → resultados table
+    api_resultados = build_resultados_from_api()
+    existentes = supabase.table("resultados").select("fase, rodada, grupo, time_casa, time_fora").execute().data
+    existentes_keys = set()
+    for e in existentes:
+        existentes_keys.add((e["fase"], e.get("rodada"), e.get("grupo"), e["time_casa"], e["time_fora"]))
+
+    novos = 0
+    for key, api_r in api_resultados.items():
+        grupo, casa, fora = key[1], key[2], key[3]
+        rodada = _rodada_lookup.get((grupo, casa, fora))
+        if rodada is None:
+            continue
+        if ("grupo", rodada, grupo, casa, fora) in existentes_keys:
+            continue
+        supabase.table("resultados").insert({
+            "fase": "grupo",
+            "rodada": rodada,
+            "grupo": grupo,
+            "time_casa": casa,
+            "time_fora": fora,
+            "gols_casa": api_r["gols_casa"],
+            "gols_fora": api_r["gols_fora"],
+        }).execute()
+        novos += 1
+
+    if novos > 0:
+        st.success(f"{novos} resultado(s) sincronizado(s) da API!")
+    else:
+        st.info("Nenhum resultado novo da API.")
+
     st.cache_data.clear()
     st.rerun()
 
@@ -282,6 +321,7 @@ participantes_map = {p["id"]: p["nome_completo"] for p in participantes_data.dat
 def calcular_pontos(part_id):
     pontos = 0
     detalhes = []
+    nome_part = participantes_map.get(part_id, "?")
 
     palpites_p = [p for p in palpites_grupos_all.data if p["participante_id"] == part_id]
     for palpite in palpites_p:

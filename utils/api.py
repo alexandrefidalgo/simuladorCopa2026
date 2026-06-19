@@ -170,13 +170,34 @@ def build_resultados_from_api() -> dict:
     """
     Build a resultados dict compatible with existing code.
     Returns: {(0, grupo, time_casa, time_fora): {"gols_casa": int, "gols_fora": int}}
+    Normalizes to canonical GRUPO_RODADAS team order.
     """
+    from data.jogos import GRUPO_RODADAS
+
+    canonical_pairs = {}
+    for rodada, jogos in GRUPO_RODADAS.items():
+        for grupo, casa, fora in jogos:
+            canonical_pairs[(grupo, casa, fora)] = True
+
     finished = get_finished_group_matches()
     resultados = {}
     for m in finished:
-        key = (0, m["group"], m["home"], m["away"])
-        resultados[key] = {
-            "gols_casa": m["score_home"],
-            "gols_fora": m["score_away"],
-        }
+        api_home, api_away = m["home"], m["away"]
+        grupo = m["group"]
+
+        if (grupo, api_home, api_away) in canonical_pairs:
+            resultados[(0, grupo, api_home, api_away)] = {
+                "gols_casa": m["score_home"],
+                "gols_fora": m["score_away"],
+            }
+        elif (grupo, api_away, api_home) in canonical_pairs:
+            resultados[(0, grupo, api_away, api_home)] = {
+                "gols_casa": m["score_away"],
+                "gols_fora": m["score_home"],
+            }
+        else:
+            resultados[(0, grupo, api_home, api_away)] = {
+                "gols_casa": m["score_home"],
+                "gols_fora": m["score_away"],
+            }
     return resultados

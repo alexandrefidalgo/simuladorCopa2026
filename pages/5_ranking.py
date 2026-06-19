@@ -105,27 +105,28 @@ for key, api_r in api_resultados.items():
     if not has_real_result:
         resultados_grupo[key] = api_r
 
-# ── Debug: resultados carregados ────────────────────────────────
-st.markdown("---")
-st.markdown("### 🔍 DEBUG — Resultados carregados (DB + API)")
-st.markdown(f"**resultados_grupo:** {len(resultados_grupo)} entradas")
-rows_rg = []
-for k, v in sorted(resultados_grupo.items()):
-    rows_rg.append({
-        "rodada": k[0], "grupo": k[1], "casa": k[2], "fora": k[3],
-        "gols_casa": v["gols_casa"], "gols_fora": v["gols_fora"],
-    })
-if rows_rg:
-    st.dataframe(pd.DataFrame(rows_rg), use_container_width=True, hide_index=True)
-st.markdown(f"**resultados_bracket:** {len(resultados_bracket)} entradas")
-rows_rb = []
-for k, v in sorted(resultados_bracket.items()):
-    rows_rb.append({
-        "fase": k[0], "casa": k[1], "fora": k[2],
-        "gols_casa": v["gols_casa"], "gols_fora": v["gols_fora"],
-    })
-if rows_rb:
-    st.dataframe(pd.DataFrame(rows_rb), use_container_width=True, hide_index=True)
+# ── Debug: resultados carregados (apenas admin) ─────────────────
+if st.session_state.get("admin", False):
+    st.markdown("---")
+    st.markdown("### 🔍 DEBUG — Resultados carregados (DB + API)")
+    st.markdown(f"**resultados_grupo:** {len(resultados_grupo)} entradas")
+    rows_rg = []
+    for k, v in sorted(resultados_grupo.items()):
+        rows_rg.append({
+            "rodada": k[0], "grupo": k[1], "casa": k[2], "fora": k[3],
+            "gols_casa": v["gols_casa"], "gols_fora": v["gols_fora"],
+        })
+    if rows_rg:
+        st.dataframe(pd.DataFrame(rows_rg), use_container_width=True, hide_index=True)
+    st.markdown(f"**resultados_bracket:** {len(resultados_bracket)} entradas")
+    rows_rb = []
+    for k, v in sorted(resultados_bracket.items()):
+        rows_rb.append({
+            "fase": k[0], "casa": k[1], "fora": k[2],
+            "gols_casa": v["gols_casa"], "gols_fora": v["gols_fora"],
+        })
+    if rows_rb:
+        st.dataframe(pd.DataFrame(rows_rb), use_container_width=True, hide_index=True)
 
 # ═══════════════════════════════════════════════════════════════════
 # CLASSIFICAÇÃO EM TEMPO REAL DOS GRUPOS
@@ -473,17 +474,18 @@ if ranking:
     df = pd.DataFrame(rows)
     st.dataframe(df, use_container_width=True, hide_index=True)
 
-    # ── Debug: detalhes de pontuação ──────────────────────────────
-    st.markdown("---")
-    st.markdown("### 🔍 DEBUG — Detalhes de pontuação")
-    for entry in ranking:
-        st.markdown(f"**{entry['nome']} — {entry['pontos']} pts**")
-        if entry["detalhes"]:
-            df_d = pd.DataFrame(entry["detalhes"])
-            st.dataframe(df_d, use_container_width=True, hide_index=True)
-        else:
-            st.caption("Sem detalhes.")
-        st.markdown("")
+    # ── Debug: detalhes de pontuação (apenas admin) ───────────────
+    if st.session_state.get("admin", False):
+        st.markdown("---")
+        st.markdown("### 🔍 DEBUG — Detalhes de pontuação")
+        for entry in ranking:
+            st.markdown(f"**{entry['nome']} — {entry['pontos']} pts**")
+            if entry["detalhes"]:
+                df_d = pd.DataFrame(entry["detalhes"])
+                st.dataframe(df_d, use_container_width=True, hide_index=True)
+            else:
+                st.caption("Sem detalhes.")
+            st.markdown("")
 
     # ── Regras de Pontuação ───────────────────────────────────────
     with st.expander("📖 Regras de Pontuação", expanded=False):

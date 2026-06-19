@@ -28,6 +28,10 @@ supabase = get_supabase()
 # ═══════════════════════════════════════════════════════════════════
 # CARREGAR RESULTADOS (DB + API)
 # ═══════════════════════════════════════════════════════════════════
+if st.button("🔄 Atualizar Resultados", use_container_width=True):
+    st.cache_data.clear()
+    st.rerun()
+
 resultados_row = supabase.table("resultados").select("*").execute()
 resultados_existentes = {}
 resultados_grupo = {}

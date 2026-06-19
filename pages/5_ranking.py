@@ -428,16 +428,15 @@ if ranking:
     df = pd.DataFrame(rows)
     st.dataframe(df, use_container_width=True, hide_index=True)
 
-    # ── Debug: detalhes por participante ──────────────────────────
-    with st.expander("🔍 Debug — Detalhes de pontuação por participante", expanded=False):
-        for entry in ranking:
-            st.markdown(f"**{entry['nome']}** — {entry['pontos']} pts")
+    # ── Debug: detalhes de pontuação ──────────────────────────────
+    st.markdown('<div class="bracket-round-header">🔍 DEBUG — DETALHES DE PONTUAÇÃO</div>', unsafe_allow_html=True)
+    for entry in ranking:
+        with st.expander(f"🔍 {entry['nome']} — {entry['pontos']} pts", expanded=False):
             if entry["detalhes"]:
                 df_d = pd.DataFrame(entry["detalhes"])
                 st.dataframe(df_d, use_container_width=True, hide_index=True)
             else:
                 st.caption("Sem detalhes.")
-            st.divider()
 
     # ── Regras de Pontuação ───────────────────────────────────────
     with st.expander("📖 Regras de Pontuação", expanded=False):

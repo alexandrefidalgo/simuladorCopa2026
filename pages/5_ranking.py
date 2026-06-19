@@ -259,17 +259,22 @@ def calcular_pontos(part_id):
     for palpite in palpites_p:
         key = (palpite["rodada"], palpite["grupo"], palpite["time_casa"], palpite["time_fora"])
         resultado = resultados_grupo.get(key)
+        reversed_lookup = False
         # Fallback: API results have rodada=0
         if not resultado:
             resultado = resultados_grupo.get((0, palpite["grupo"], palpite["time_casa"], palpite["time_fora"]))
-        # Fallback: try reversed matchup
+        # Fallback: try reversed matchup (API or different team order)
         if not resultado:
             resultado = resultados_grupo.get((0, palpite["grupo"], palpite["time_fora"], palpite["time_casa"]))
+            reversed_lookup = True
         data_hora = GRUPO_JOGOS_DATAS.get(key, "")
         p_casa, p_fora = palpite["placar_casa"], palpite["placar_fora"]
 
         if resultado:
             r_casa, r_fora = resultado["gols_casa"], resultado["gols_fora"]
+            # Invert scores when result came from reversed matchup lookup
+            if reversed_lookup:
+                r_casa, r_fora = r_fora, r_casa
 
             if r_casa > r_fora: vencedor_real = "casa"
             elif r_fora > r_casa: vencedor_real = "fora"
@@ -324,9 +329,15 @@ def calcular_pontos(part_id):
                 casa_time = placar_info.get("casa_time", "")
                 fora_time = placar_info.get("fora_time", "")
                 resultado = resultados_bracket.get((fase_key, casa_time, fora_time))
+                reversed_bracket = False
+                if not resultado:
+                    resultado = resultados_bracket.get((fase_key, fora_time, casa_time))
+                    reversed_bracket = True
 
                 if resultado:
                     r_casa, r_fora = resultado["gols_casa"], resultado["gols_fora"]
+                    if reversed_bracket:
+                        r_casa, r_fora = r_fora, r_casa
                     if r_casa > r_fora:
                         vencedor_real = casa_time
                     elif r_fora > r_casa:

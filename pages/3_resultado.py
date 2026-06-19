@@ -179,8 +179,14 @@ if palpites_bracket_data:
 
                 # Buscar resultado real
                 resultado = resultados_bracket.get((fase_key, casa_time, fora_time))
+                reversed_bracket = False
+                if not resultado:
+                    resultado = resultados_bracket.get((fase_key, fora_time, casa_time))
+                    reversed_bracket = True
                 if resultado:
                     r_casa, r_fora = resultado["gols_casa"], resultado["gols_fora"]
+                    if reversed_bracket:
+                        r_casa, r_fora = r_fora, r_casa
                     if r_casa > r_fora:
                         vencedor_real = casa_time
                     elif r_fora > r_casa:

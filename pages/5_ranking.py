@@ -458,8 +458,12 @@ ranking.sort(key=lambda x: x["pontos"], reverse=True)
 # ── Exibir ranking ───────────────────────────────────────────────
 if ranking:
     rows = []
-    for i, entry in enumerate(ranking):
-        pos = i + 1
+    pos = 0
+    prev_pontos = None
+    for entry in ranking:
+        if entry["pontos"] != prev_pontos:
+            pos += 1
+        prev_pontos = entry["pontos"]
         if pos == 1: pos_str = "🥇 1º"
         elif pos == 2: pos_str = "🥈 2º"
         elif pos == 3: pos_str = "🥉 3º"

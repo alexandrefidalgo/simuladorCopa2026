@@ -553,23 +553,49 @@ if ranking:
                     # Header do jogo
                     st.markdown(f'<div class="match-detail-header"><strong>⚽ {jogo}</strong> — {real_info} ⏰ {data_info}</div>', unsafe_allow_html=True)
 
-                    rows_jogo = []
-                    for _, row in df_jogo.iterrows():
-                        if row["tipo"] == "aguardando":
-                            emoji = "⏳"
-                        elif row["tipo"] == "placar_exato":
-                            emoji = "✅"
-                        elif row["tipo"] == "resultado":
-                            emoji = "🟡"
-                        else:
-                            emoji = "❌"
-                        rows_jogo.append({
-                            "Participante": row["participante"],
-                            "Palpite": row["palpite"],
-                            "Pontos": f"{emoji} {row['pontos']}",
-                        })
+                    # Agrupar por tipo de acerto
+                    exatos = df_jogo[df_jogo["tipo"] == "placar_exato"].sort_values("participante")
+                    acertou = df_jogo[df_jogo["tipo"] == "resultado"].sort_values("participante")
+                    errou = df_jogo[df_jogo["tipo"] == "errou"].sort_values("participante")
+                    aguardando = df_jogo[df_jogo["tipo"] == "aguardando"].sort_values("participante")
 
-                    st.dataframe(pd.DataFrame(rows_jogo), use_container_width=True, hide_index=True)
+                    def render_participant_row(row):
+                        if row["tipo"] == "placar_exato":
+                            badge_class = "score-exact"
+                        elif row["tipo"] == "resultado":
+                            badge_class = "score-correct"
+                        elif row["tipo"] == "errou":
+                            badge_class = "score-wrong"
+                        else:
+                            badge_class = "score-wrong"
+                        
+                        return f"""
+                        <div class="participant-row">
+                            <span class="participant-name">{row['participante']}</span>
+                            <span class="participant-palpite">{row['palpite']}</span>
+                            <span class="score-badge {badge_class}">{row['pontos']}</span>
+                        </div>
+                        """
+
+                    if not exatos.empty:
+                        st.markdown(f'<div class="score-group-header"><span class="score-badge score-exact">4</span> Placar Exato ({len(exatos)})</div>', unsafe_allow_html=True)
+                        html = "".join(render_participant_row(row) for _, row in exatos.iterrows())
+                        st.markdown(html, unsafe_allow_html=True)
+
+                    if not acertou.empty:
+                        st.markdown(f'<div class="score-group-header"><span class="score-badge score-correct">1</span> Acertou Resultado ({len(acertou)})</div>', unsafe_allow_html=True)
+                        html = "".join(render_participant_row(row) for _, row in acertou.iterrows())
+                        st.markdown(html, unsafe_allow_html=True)
+
+                    if not errou.empty:
+                        st.markdown(f'<div class="score-group-header"><span class="score-badge score-wrong">0</span> Errou ({len(errou)})</div>', unsafe_allow_html=True)
+                        html = "".join(render_participant_row(row) for _, row in errou.iterrows())
+                        st.markdown(html, unsafe_allow_html=True)
+
+                    if not aguardando.empty:
+                        st.markdown(f'<div class="score-group-header">⏳ Aguardando ({len(aguardando)})</div>', unsafe_allow_html=True)
+                        html = "".join(render_participant_row(row) for _, row in aguardando.iterrows())
+                        st.markdown(html, unsafe_allow_html=True)
     else:
         st.info("Nenhum resultado registrado para comparar.")
 else:

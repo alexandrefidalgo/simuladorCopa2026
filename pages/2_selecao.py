@@ -75,8 +75,14 @@ for key, api_r in api_resultados.items():
     has_real_result = False
     for rodada in [1, 2, 3]:
         db_key = (rodada, grupo, casa, fora)
+        db_key_rev = (rodada, grupo, fora, casa)
         if db_key in resultados_grupo:
             r = resultados_grupo[db_key]
+            if r.get("gols_casa", 0) > 0 or r.get("gols_fora", 0) > 0:
+                has_real_result = True
+                break
+        if db_key_rev in resultados_grupo:
+            r = resultados_grupo[db_key_rev]
             if r.get("gols_casa", 0) > 0 or r.get("gols_fora", 0) > 0:
                 has_real_result = True
                 break

@@ -4,7 +4,7 @@ from pathlib import Path
 from database.connection import get_supabase
 from data.grupos import GRUPOS, get_flag, get_flag_html
 from data.jogos import (
-    GRUPO_JOGOS_DATAS,
+    GRUPO_RODADAS, GRUPO_JOGOS_DATAS,
     MATA_MATA_RODADAS, ORDEM_RODADAS_MATA_MATA,
 )
 from utils.api import build_resultados_from_api

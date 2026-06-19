@@ -2,7 +2,7 @@ import streamlit as st
 from pathlib import Path
 from database.connection import get_supabase
 from data.grupos import GRUPOS, get_flag, get_flag_html, time_com_bandeira
-from data.jogos import GRUPO_RODADAS, GRUPO_DATAS, GRUPO_JOGOS_DATAS
+from data.jogos import GRUPO_RODADAS, GRUPO_DATAS, GRUPO_JOGOS_DATAS, MATA_MATA_RODADAS, ORDEM_RODADAS_MATA_MATA
 from utils.ui_components import render_grupo_simples, grupo_label_with_flags
 
 st.set_page_config(page_title="Admin - Copa 2026", page_icon="👑", layout="wide")
@@ -164,3 +164,98 @@ if st.button("💾 Salvar Palpites como Admin", type="primary", use_container_wi
             st.balloons()
         except Exception as e:
             st.error(f"Erro ao salvar: {e}")
+
+# ═══════════════════════════════════════════════════════════════════
+# RESULTADOS REAIS DOS JOGOS
+# ═══════════════════════════════════════════════════════════════════
+st.markdown("---")
+st.markdown('<div class="bracket-round-header">📝 RESULTADOS REAIS DOS JOGOS</div>', unsafe_allow_html=True)
+st.caption("Registre os placares reais de cada jogo para calcular o ranking:")
+
+# Load existing results
+resultados_row = supabase.table("resultados").select("*").execute()
+resultados_existentes = {}
+for r in resultados_row.data:
+    if r["fase"] == "grupo":
+        key = (r["rodada"], r["grupo"], r["time_casa"], r["time_fora"])
+    else:
+        key = (r["fase"], r["time_casa"], r["time_fora"])
+    resultados_existentes[key] = r
+
+# Tabs for group rounds
+tab_labels_res = [f"Rodada {r} — {GRUPO_DATAS[r]}" for r in [1, 2, 3]]
+tabs_res = st.tabs(tab_labels_res)
+
+resultados_grupos_novos = {}
+
+for tab_res, rodada_num in zip(tabs_res, [1, 2, 3]):
+    with tab_res:
+        jogos_rodada = GRUPO_RODADAS[rodada_num]
+        jogos_por_grupo = {}
+        for grupo, casa, fora in jogos_rodada:
+            jogos_por_grupo.setdefault(grupo, []).append((casa, fora))
+
+        for grupo_letra in GRUPOS.keys():
+            jogos_grupo = jogos_por_grupo.get(grupo_letra, [])
+            if not jogos_grupo:
+                continue
+
+            st.markdown(f'<div class="bracket-round-header">⚽ {grupo_label_with_flags(grupo_letra)}</div>', unsafe_allow_html=True)
+
+            for idx, (casa, fora) in enumerate(jogos_grupo):
+                casa_flag = get_flag_html(casa, 20)
+                fora_flag = get_flag_html(fora, 20)
+                data_hora = GRUPO_JOGOS_DATAS.get((rodada_num, grupo_letra, casa, fora), "")
+                data_str = f"<small style='color:#999'>⏰ {data_hora} BRT</small>" if data_hora else ""
+
+                rkey = (rodada_num, grupo_letra, casa, fora)
+                salvo = resultados_existentes.get(rkey, {})
+                val_casa = salvo.get("gols_casa", 0)
+                val_fora = salvo.get("gols_fora", 0)
+
+                st.markdown(f'<div class="match-card">{data_str}</div>', unsafe_allow_html=True)
+                col_casa, col_pc, col_vs, col_pf, col_fora = st.columns([3, 1, 0.5, 1, 3])
+                with col_casa:
+                    st.markdown(f"**{casa_flag} {casa}**", unsafe_allow_html=True)
+                with col_pc:
+                    gols_casa = st.number_input(
+                        "Gols", min_value=0, max_value=20, value=val_casa,
+                        key=f"res_pc_r{rodada_num}_{grupo_letra}_{idx}",
+                        label_visibility="collapsed",
+                    )
+                with col_vs:
+                    st.markdown("<div style='text-align:center;padding-top:0.3rem;color:#999'>x</div>", unsafe_allow_html=True)
+                with col_pf:
+                    gols_fora = st.number_input(
+                        "Gols", min_value=0, max_value=20, value=val_fora,
+                        key=f"res_pf_r{rodada_num}_{grupo_letra}_{idx}",
+                        label_visibility="collapsed",
+                    )
+                with col_fora:
+                    st.markdown(f"**{fora_flag} {fora}**", unsafe_allow_html=True)
+
+                resultados_grupos_novos[(rodada_num, grupo_letra, casa, fora)] = {
+                    "gols_casa": gols_casa,
+                    "gols_fora": gols_fora,
+                }
+
+# Save results
+st.markdown("---")
+if st.button("💾 Salvar Resultados Reais", type="primary", use_container_width=True):
+    try:
+        # Delete existing group results and re-insert
+        supabase.table("resultados").delete().eq("fase", "grupo").execute()
+        for (rodada, grupo_letra, casa, fora), placar in resultados_grupos_novos.items():
+            supabase.table("resultados").insert({
+                "fase": "grupo",
+                "rodada": rodada,
+                "grupo": grupo_letra,
+                "time_casa": casa,
+                "time_fora": fora,
+                "gols_casa": placar["gols_casa"],
+                "gols_fora": placar["gols_fora"],
+            }).execute()
+        st.success("Resultados reais salvos com sucesso!")
+        st.rerun()
+    except Exception as e:
+        st.error(f"Erro ao salvar: {e}")

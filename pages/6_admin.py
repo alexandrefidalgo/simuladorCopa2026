@@ -220,7 +220,10 @@ for tab_bracket, fase_key in zip(tabs_bracket, ORDEM_RODADAS_MATA_MATA):
 
                 st.markdown(f'<div class="match-card">{data_str}</div>', unsafe_allow_html=True)
 
-                opcoes_vencedor = [f"{casa_flag} {casa_time}", f"{fora_flag} {fora_time}"]
+                # Use emoji flags, not HTML — st.radio doesn't render HTML
+                casa_emoji = get_flag(casa_time)
+                fora_emoji = get_flag(fora_time)
+                opcoes_vencedor = [f"{casa_emoji} {casa_time}", f"{fora_emoji} {fora_time}"]
                 default_idx = 0
                 if salvo_vencedor:
                     if salvo_vencedor == casa_time:
@@ -243,7 +246,7 @@ for tab_bracket, fase_key in zip(tabs_bracket, ORDEM_RODADAS_MATA_MATA):
                 with col_fora:
                     st.markdown(f"**{fora_flag} {fora_time}**", unsafe_allow_html=True)
 
-                vencedor = casa_time if vencedor_escolha.startswith(casa_flag) or casa_time in vencedor_escolha else fora_time
+                vencedor = casa_time if casa_time in vencedor_escolha else fora_time
 
                 col_pc, col_vs, col_pf = st.columns([2, 0.5, 2])
                 with col_pc:

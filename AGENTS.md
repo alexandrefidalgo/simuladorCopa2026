@@ -73,3 +73,4 @@ supabase db push
 - **Shared CSS**: every page loads `assets/styles.css` via `Path.read_text()` at the top of the file. Add new styles there, not inline.
 - **MCP servers**: Supabase and Composio MCP configured in `opencode.json` (contains bearer tokens — never commit). There's also a `.mcp.json` in the root for Supabase MCP.
 - **External APIs**: `utils/api.py` fetches live match data from `worldcup26.ir` and `wheniskickoff.com` with a `TEAM_MAP` translating FIFA codes and English names to Portuguese.
+- **Skills**: Supabase skills available via `skills-lock.json` for agent-assisted database work.
